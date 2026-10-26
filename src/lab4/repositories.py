@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 import psycopg
-from psycopg.rows import DictRow,dict_row
+from psycopg.rows import dict_row
 
 from .schemas import BeerCreate, BeerUpdate
 
@@ -28,12 +28,10 @@ class AbstractBeerRepository(ABC):
 
 class PostgresBeerRepository(AbstractBeerRepository):
 
-    def __init__(self, dsn: str = DSN):
+    def __init__(self, dsn: str = DSN) -> None:
         self.dsn = dsn
 
     def get_all(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
-        # with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
-        #     with conn.cursor() as cur:
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
@@ -49,8 +47,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
                     "SELECT id, title, style, abv, sku, brewery_id FROM beers WHERE id = %s;",
                     (item_id,),
                 )
-                row = cur.fetchone()
-                return dict(row) if row else None
+                return cur.fetchone()
 
     def create(self, item: BeerCreate) -> Dict[str, Any]:
         with psycopg.connect(self.dsn) as conn:
@@ -66,8 +63,8 @@ class PostgresBeerRepository(AbstractBeerRepository):
                 res = cur.fetchone()
                 conn.commit()
                 if res is None:
-                    raise RuntimeError("Не вдалося створити запис у базі даних")
-                return dict(res)
+                    raise RuntimeError("Не вдалося створити запис у базі даних.")
+                return res
 
     def update(self, item_id: int, item: BeerUpdate) -> Optional[Dict[str, Any]]:
         existing = self.get_by_id(item_id)
@@ -93,7 +90,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
                 )
                 res = cur.fetchone()
                 conn.commit()
-                return dict(res) if res else None
+                return res
 
     def delete(self, item_id: int) -> bool:
         with psycopg.connect(self.dsn) as conn:
