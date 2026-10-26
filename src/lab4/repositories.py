@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import psycopg
 from psycopg.rows import dict_row
 
@@ -11,16 +12,16 @@ DSN = "postgresql://postgres:postgres@localhost:5432/lab4_db"
 class AbstractBeerRepository(ABC):
 
     @abstractmethod
-    def get_all(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]: ...
+    def get_all(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]: ...
 
     @abstractmethod
-    def get_by_id(self, item_id: int) -> Optional[Dict[str, Any]]: ...
+    def get_by_id(self, item_id: int) -> dict[str, Any] | None: ...
 
     @abstractmethod
-    def create(self, item: BeerCreate) -> Dict[str, Any]: ...
+    def create(self, item: BeerCreate) -> dict[str, Any]: ...
 
     @abstractmethod
-    def update(self, item_id: int, item: BeerUpdate) -> Optional[Dict[str, Any]]: ...
+    def update(self, item_id: int, item: BeerUpdate) -> dict[str, Any] | None: ...
 
     @abstractmethod
     def delete(self, item_id: int) -> bool: ...
@@ -31,7 +32,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
     def __init__(self, dsn: str = DSN) -> None:
         self.dsn = dsn
 
-    def get_all(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    def get_all(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
@@ -40,7 +41,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
                 )
                 return list(cur.fetchall())
 
-    def get_by_id(self, item_id: int) -> Optional[Dict[str, Any]]:
+    def get_by_id(self, item_id: int) -> dict[str, Any] | None:
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
@@ -49,7 +50,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
                 )
                 return cur.fetchone()
 
-    def create(self, item: BeerCreate) -> Dict[str, Any]:
+    def create(self, item: BeerCreate) -> dict[str, Any]:
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
@@ -66,7 +67,7 @@ class PostgresBeerRepository(AbstractBeerRepository):
                     raise RuntimeError("Не вдалося створити запис у базі даних.")
                 return res
 
-    def update(self, item_id: int, item: BeerUpdate) -> Optional[Dict[str, Any]]:
+    def update(self, item_id: int, item: BeerUpdate) -> dict[str, Any] | None:
         existing = self.get_by_id(item_id)
         if not existing:
             return None
@@ -93,9 +94,8 @@ class PostgresBeerRepository(AbstractBeerRepository):
                 return res
 
     def delete(self, item_id: int) -> bool:
-        with psycopg.connect(self.dsn) as conn:
-            with conn.cursor() as cur:
-                cur.execute("DELETE FROM beers WHERE id = %s;", (item_id,))
-                deleted = cur.rowcount > 0
-                conn.commit()
-                return deleted
+        with psycopg.connect(self.dsn) as conn, conn.cursor() as cur:
+            cur.execute("DELETE FROM beers WHERE id = %s;", (item_id,))
+            deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted

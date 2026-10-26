@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class Brewery:
-    id: Optional[int]
+    id: int | None
     name: str
     country: str
     email: str
@@ -12,7 +11,7 @@ class Brewery:
 
 @dataclass
 class Beer:
-    id: Optional[int]
+    id: int | None
     title: str
     style: str
     abv: float

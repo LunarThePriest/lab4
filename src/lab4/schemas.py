@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 SKU_REGEX = r"^BEER-\d{4}$"
@@ -45,14 +45,14 @@ class BeerCreate(BeerBase):
 
 
 class BeerUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=2, max_length=150)
-    style: Optional[str] = Field(default=None, min_length=2, max_length=50)
-    abv: Optional[float] = Field(default=None, ge=0.0, le=100.0)
-    sku: Optional[str] = None
-    brewery_id: Optional[int] = None
+    title: str | None = Field(default=None, min_length=2, max_length=150)
+    style: str | None = Field(default=None, min_length=2, max_length=50)
+    abv: float | None = Field(default=None, ge=0.0, le=100.0)
+    sku: str | None = None
+    brewery_id: int | None = None
 
     @field_validator("sku")
-    def validate_sku_format(cls, v: Optional[str]) -> Optional[str]:
+    def validate_sku_format(cls, v: str | None) -> str | None:
         if v is not None and not re.match(SKU_REGEX, v):
             raise ValueError("SKU має відповідати шаблону 'BEER-XXXX'")
         return v
