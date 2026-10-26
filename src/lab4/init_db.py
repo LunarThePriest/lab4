@@ -61,7 +61,9 @@ def init_database() -> None:
             )
 
         conn.commit()
-    print(f"База успішно ініціалізована: додано {len(breweries_data)} броварень та {len(beers_data)} сортів пива.")
+    print(
+        f"База успішно ініціалізована: додано {len(breweries_data)} броварень та {len(beers_data)} сортів пива."
+    )
 
 
 if __name__ == "__main__":

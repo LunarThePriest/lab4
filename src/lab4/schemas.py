@@ -14,7 +14,9 @@ class BreweryBase(BaseModel):
     @field_validator("email")
     def validate_email_format(cls, v: str) -> str:
         if not re.match(EMAIL_REGEX, v):
-            raise ValueError("Email повинен мати коректний формат, наприклад: user@domain.com")
+            raise ValueError(
+                "Email повинен мати коректний формат, наприклад: user@domain.com"
+            )
         return v
 
 
@@ -36,7 +38,9 @@ class BeerBase(BaseModel):
     @field_validator("sku")
     def validate_sku_format(cls, v: str) -> str:
         if not re.match(SKU_REGEX, v):
-            raise ValueError("SKU має відповідати шаблону 'BEER-XXXX' (наприклад: BEER-1001)")
+            raise ValueError(
+                "SKU має відповідати шаблону 'BEER-XXXX' (наприклад: BEER-1001)"
+            )
         return v
 
 

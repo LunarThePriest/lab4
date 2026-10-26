@@ -29,7 +29,9 @@ def list_beers(
     return repo.get_all(limit=limit, offset=offset)
 
 
-@app.get("/beers/{beer_id}", response_model=BeerResponse, status_code=status.HTTP_200_OK)
+@app.get(
+    "/beers/{beer_id}", response_model=BeerResponse, status_code=status.HTTP_200_OK
+)
 def get_beer(beer_id: int, repo: RepoDep):
     beer = repo.get_by_id(beer_id)
     if beer is None:
@@ -51,7 +53,9 @@ def create_beer(beer_in: BeerCreate, repo: RepoDep):
         )
 
 
-@app.put("/beers/{beer_id}", response_model=BeerResponse, status_code=status.HTTP_200_OK)
+@app.put(
+    "/beers/{beer_id}", response_model=BeerResponse, status_code=status.HTTP_200_OK
+)
 def update_beer(
     beer_id: int,
     beer_in: BeerUpdate,

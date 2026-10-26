@@ -10,6 +10,7 @@ DSN = "postgresql://postgres:postgres@localhost:5432/lab4_db"
 
 
 class AbstractBeerRepository(ABC):
+    """Абстрактний базовий репозиторій (дотримання OCP)[cite: 5, 7]."""
 
     @abstractmethod
     def get_all(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]: ...
@@ -28,44 +29,58 @@ class AbstractBeerRepository(ABC):
 
 
 class PostgresBeerRepository(AbstractBeerRepository):
-
     def __init__(self, dsn: str = DSN) -> None:
         self.dsn = dsn
 
     def get_all(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
-        with psycopg.connect(self.dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute(
-                    "SELECT id, title, style, abv, sku, brewery_id FROM beers ORDER BY id LIMIT %s OFFSET %s;",
-                    (limit, offset),
-                )
-                return list(cur.fetchall())
+        with (
+            psycopg.connect(self.dsn) as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            cur.execute(
+                """
+                SELECT id, title, style, abv, sku, brewery_id
+                FROM beers
+                ORDER BY id
+                LIMIT %s OFFSET %s;
+                """,
+                (limit, offset),
+            )
+            return list(cur.fetchall())
 
     def get_by_id(self, item_id: int) -> dict[str, Any] | None:
-        with psycopg.connect(self.dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute(
-                    "SELECT id, title, style, abv, sku, brewery_id FROM beers WHERE id = %s;",
-                    (item_id,),
-                )
-                return cur.fetchone()
+        with (
+            psycopg.connect(self.dsn) as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            cur.execute(
+                """
+                SELECT id, title, style, abv, sku, brewery_id
+                FROM beers
+                WHERE id = %s;
+                """,
+                (item_id,),
+            )
+            return cur.fetchone()
 
     def create(self, item: BeerCreate) -> dict[str, Any]:
-        with psycopg.connect(self.dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute(
-                    """
-                    INSERT INTO beers (title, style, abv, sku, brewery_id)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id, title, style, abv, sku, brewery_id;
-                    """,
-                    (item.title, item.style, item.abv, item.sku, item.brewery_id),
-                )
-                res = cur.fetchone()
-                conn.commit()
-                if res is None:
-                    raise RuntimeError("Не вдалося створити запис у базі даних.")
-                return res
+        with (
+            psycopg.connect(self.dsn) as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            cur.execute(
+                """
+                INSERT INTO beers (title, style, abv, sku, brewery_id)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id, title, style, abv, sku, brewery_id;
+                """,
+                (item.title, item.style, item.abv, item.sku, item.brewery_id),
+            )
+            res = cur.fetchone()
+            conn.commit()
+            if res is None:
+                raise RuntimeError("Не вдалося створити запис у базі даних.")
+            return res
 
     def update(self, item_id: int, item: BeerUpdate) -> dict[str, Any] | None:
         existing = self.get_by_id(item_id)
@@ -76,22 +91,26 @@ class PostgresBeerRepository(AbstractBeerRepository):
         style = item.style if item.style is not None else existing["style"]
         abv = item.abv if item.abv is not None else existing["abv"]
         sku = item.sku if item.sku is not None else existing["sku"]
-        brewery_id = item.brewery_id if item.brewery_id is not None else existing["brewery_id"]
+        brewery_id = (
+            item.brewery_id if item.brewery_id is not None else existing["brewery_id"]
+        )
 
-        with psycopg.connect(self.dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute(
-                    """
-                    UPDATE beers
-                    SET title = %s, style = %s, abv = %s, sku = %s, brewery_id = %s
-                    WHERE id = %s
-                    RETURNING id, title, style, abv, sku, brewery_id;
-                    """,
-                    (title, style, abv, sku, brewery_id, item_id),
-                )
-                res = cur.fetchone()
-                conn.commit()
-                return res
+        with (
+            psycopg.connect(self.dsn) as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            cur.execute(
+                """
+                UPDATE beers
+                SET title = %s, style = %s, abv = %s, sku = %s, brewery_id = %s
+                WHERE id = %s
+                RETURNING id, title, style, abv, sku, brewery_id;
+                """,
+                (title, style, abv, sku, brewery_id, item_id),
+            )
+            res = cur.fetchone()
+            conn.commit()
+            return res
 
     def delete(self, item_id: int) -> bool:
         with psycopg.connect(self.dsn) as conn, conn.cursor() as cur:
